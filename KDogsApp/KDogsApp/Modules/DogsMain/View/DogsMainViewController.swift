@@ -10,7 +10,18 @@ import Combine
 
 final class DogsMainViewController: UIViewController {
     
-    @IBOutlet private weak var dogsCollectionView: UICollectionView!
+    @IBOutlet private weak var dogsCollectionView: UICollectionView! {
+        didSet {
+            dogsCollectionView.backgroundColor = .clear
+            dogsCollectionView.accessibilityIdentifier = "dogs_collection_view"
+            dogsCollectionView.delegate = self
+            dogsCollectionView.dataSource = self
+            dogsCollectionView.register(UINib(nibName: String(describing: DogViewCell.self), bundle: nil), forCellWithReuseIdentifier: presenter.cellReuseIdentifier)
+            if let layout = dogsCollectionView.collectionViewLayout as? UICollectionViewFlowLayout {
+                layout.minimumLineSpacing = 32
+            }
+        }
+    }
     
     private let presenter: DogsMainPresenterProtocol
     private var dogsModel: [DogModel] = []
@@ -42,6 +53,7 @@ final class DogsMainViewController: UIViewController {
 
 private extension DogsMainViewController {
     func setupNavigationBar() {
+        view.backgroundColor = .customWhite
         navigationItem.hidesBackButton = true
         
         let backButton = UIButton(type: .system)
@@ -55,7 +67,7 @@ private extension DogsMainViewController {
         if let arialFont = UIFont(name: "Arial-BoldMT", size: 20) {
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: arialFont,
-                .foregroundColor: UIColor.customBlack
+//                .foregroundColor: UIColor.customBlack
             ]
             
             navigationController?.navigationBar.titleTextAttributes = attributes
@@ -89,6 +101,32 @@ private extension DogsMainViewController {
     private func fillWithData(viewData: [DogModel]) {
         self.dogsModel = viewData
 
-        // crear celda y actualizar collectionview
+        dogsCollectionView.reloadData()
+    }
+}
+
+extension DogsMainViewController: UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return dogsModel.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell =
+                collectionView.dequeueReusableCell(withReuseIdentifier: presenter.cellReuseIdentifier, for: indexPath) as? DogViewCell else {
+            return UICollectionViewCell()
+        }
+        
+        cell.setupComponents(dogModel: dogsModel[indexPath.row])
+        
+        return cell
+    }
+}
+
+extension DogsMainViewController: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView,
+                        layout collectionViewLayout: UICollectionViewLayout,
+                        sizeForItemAt indexPath: IndexPath) -> CGSize {
+    
+        return CGSize(width: collectionView.bounds.width - 32, height: 175)
     }
 }

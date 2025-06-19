@@ -20,9 +20,9 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="none" translatesAutoresizingMaskIntoConstraints="NO" id="WKG-cK-qiP">
-                    <rect key="frame" x="0.0" y="59" width="393" height="759"/>
+                    <rect key="frame" x="0.0" y="75" width="393" height="743"/>
                     <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="xoL-ID-uH6">
+                    <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="32" id="xoL-ID-uH6">
                         <size key="itemSize" width="128" height="128"/>
                         <size key="headerReferenceSize" width="0.0" height="0.0"/>
                         <size key="footerReferenceSize" width="0.0" height="0.0"/>
@@ -35,7 +35,7 @@
             <constraints>
                 <constraint firstItem="WKG-cK-qiP" firstAttribute="trailing" secondItem="fnl-2z-Ty3" secondAttribute="trailing" id="2WD-VB-BCH"/>
                 <constraint firstItem="WKG-cK-qiP" firstAttribute="leading" secondItem="fnl-2z-Ty3" secondAttribute="leading" id="JGK-Kt-bKL"/>
-                <constraint firstItem="WKG-cK-qiP" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" id="jxG-4t-Imc"/>
+                <constraint firstItem="WKG-cK-qiP" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" constant="16" id="jxG-4t-Imc"/>
                 <constraint firstItem="WKG-cK-qiP" firstAttribute="bottom" secondItem="fnl-2z-Ty3" secondAttribute="bottom" id="lxg-6j-cbT"/>
             </constraints>
             <point key="canvasLocation" x="57.251908396946561" y="0.0"/>

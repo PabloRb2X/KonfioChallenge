@@ -9,7 +9,7 @@ import UIKit
 
 protocol DogsMainWireframeProtocol {
     func showViewController(presenter: DogsMainPresenterProtocol)
-    func showAlert(title: String, message: String, titleButtonOne: String, titleButtonTwo: String)
+    func showAlert(title: String, titleButton: String)
 }
 
 final class DogsMainWireframe {
@@ -35,35 +35,25 @@ extension DogsMainWireframe: DogsMainWireframeProtocol {
         navigationController?.pushViewController(viewController, animated: true)
     }
     
-    func showAlert(
-        title: String, message: String, titleButtonOne: String, titleButtonTwo: String
-    ) {
+    func showAlert(title: String, titleButton: String) {
         let alert = UIAlertController(
-            title: title,
-            message: message,
+            title: title, message: nil,
             preferredStyle: UIAlertController.Style.alert
         )
         
-        alert.addAction(UIAlertAction(title: titleButtonOne, style: UIAlertAction.Style.default, handler: { action in
+        alert.addAction(UIAlertAction(title: titleButton, style: UIAlertAction.Style.default, handler: { action in
             
             if let dogsVC = self.navigationController?.viewControllers.last as? DogsMainViewController {
                 dogsVC.viewModelInput.retryPublisher.send()
             }
         }))
         
-        alert.addAction(UIAlertAction(title: titleButtonTwo, style: UIAlertAction.Style.cancel, handler: nil))
-        
         navigationController?.present(alert, animated: true, completion: nil)
     }
 }
 
 extension DogsMainWireframeProtocol {
-    func showAlert(
-        title: String,
-        message: String,
-        titleButtonOne: String = "Aceptar",
-        titleButtonTwo: String = "Cancelar"
-    ) {
-        showAlert(title: title, message: message, titleButtonOne: titleButtonOne, titleButtonTwo: titleButtonTwo)
+    func showAlert(title: String, titleButton: String = "Reintentar") {
+        showAlert(title: title, titleButton: titleButton)
     }
 }

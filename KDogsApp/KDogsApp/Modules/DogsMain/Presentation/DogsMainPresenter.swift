@@ -9,6 +9,7 @@ import Combine
 
 protocol DogsMainPresenterProtocol {
     var navTitle: String { get }
+    var cellReuseIdentifier: String { get }
     var output: DogsMainViewOutput { get }
     var dogsList: [DogModel] { get }
 
@@ -20,11 +21,8 @@ final class DogsMainPresenter {
     
     private var interactor: DogsMainInteractorProtocol
     private let wireframe: DogsMainWireframeProtocol
-    
     private var subscriptions = Set<AnyCancellable>()
-    
     private let titleErrorMessage = "¡Ha ocurrido un error!"
-    private let descriptionErrorMessage = "Ocurrió un error, ¿deseas intentarlo nuevamente?"
     
     // MARK: - Public properties
     
@@ -46,13 +44,15 @@ final class DogsMainPresenter {
 }
 
 extension DogsMainPresenter: DogsMainPresenterProtocol {
-    // MARK: - Input properties
     
     var navTitle: String {
         "Dogs We Love"
     }
     
-    // MARK: - Input functions
+    var cellReuseIdentifier: String {
+        "dog_cell"
+    }
+    
     func bind(input: DogsMainViewInput) -> DogsMainViewOutput {
         input
             .viewLoadedPublisher
@@ -87,10 +87,7 @@ private extension DogsMainPresenter {
                     if !saveLastDogModel.isEmpty {
                         self.output.viewDataPublisher.send(saveLastDogModel)
                     } else {
-                        self.wireframe.showAlert(
-                            title: "Ha ocurrido un error",
-                            message: "No se pudo cargar la información. Vuelva a intentarlo."
-                        )
+                        self.wireframe.showAlert(title: titleErrorMessage)
                     }
                 }
             } receiveValue: { [weak self] model in

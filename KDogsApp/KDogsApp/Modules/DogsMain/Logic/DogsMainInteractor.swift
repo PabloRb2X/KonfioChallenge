@@ -37,7 +37,9 @@ extension DogsMainInteractor: DogsMainInteractorProtocol {
     func saveDogsToCoreData(_ dogs: [DogModel]) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
         let context = appDelegate.persistentContainer.viewContext
-
+        
+        emptyDogsData(context: context)
+        
         for dog in dogs {
             let entity = DogEntity(context: context)
             
@@ -73,6 +75,19 @@ extension DogsMainInteractor: DogsMainInteractorProtocol {
             }
         } catch {
             return []
+        }
+    }
+}
+
+private extension DogsMainInteractor {
+    func emptyDogsData(context: NSManagedObjectContext) {
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = DogEntity.fetchRequest()
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        
+        do {
+            try context.execute(deleteRequest)
+        } catch {
+            // Not implemented
         }
     }
 }
