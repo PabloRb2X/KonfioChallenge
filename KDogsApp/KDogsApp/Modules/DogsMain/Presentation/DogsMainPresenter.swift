@@ -14,7 +14,7 @@ protocol DogsMainPresenterProtocol: DogsMainViewInput, DogsMainViewOutput {
 final class DogsMainPresenter {
     // MARK: - Private properties
     
-    private let interactor: DogsMainInteractorProtocol
+    private var interactor: DogsMainInteractorProtocol
     private let wireframe: DogsMainWireframeProtocol
     
     private var subscriptions = Set<AnyCancellable>()
@@ -67,12 +67,26 @@ private extension DogsMainPresenter {
         interactor
             .fetchDogsList()
             .sink { [weak self] result in
-            if case .failure = result {
+                guard let self = self else { return }
                 
+                if case .failure = result {
+                    let saveLastDogModel = self.interactor.fetchDogsFromCoreData()
+                    
+                    if !saveLastDogModel.isEmpty {
+                        // recargar el collection view
+                    } else {
+                        self.wireframe.showAlert(
+                            title: "Ha ocurrido un error",
+                            message: "No se pudo cargar la información. Vuelva a intentarlo.",
+                            presenter: self
+                        )
+                    }
+                }
+            } receiveValue: { [weak self] model in
+                self?.interactor.dogsList = model
+                self?.interactor.saveDogsToCoreData(model)
+                // cargar la info en el collectionview
             }
-        } receiveValue: { [weak self] model in
-            print("model = \(model)")
-        }
-        .store(in: &subscriptions)
+            .store(in: &subscriptions)
     }
 }
