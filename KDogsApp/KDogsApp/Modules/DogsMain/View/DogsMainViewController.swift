@@ -6,17 +6,20 @@
 //
 
 import UIKit
+import Combine
 
 final class DogsMainViewController: UIViewController {
     
     @IBOutlet private weak var dogsCollectionView: UICollectionView!
     
-    private let input: DogsMainViewInput
-    private let output: DogsMainViewOutput
+    private let presenter: DogsMainPresenterProtocol
+    private var dogsModel: [DogModel] = []
+    private var subscriptions = Set<AnyCancellable>()
+    
+    let viewModelInput: DogsMainViewInput = DogsMainViewInput()
 
-    init(input: DogsMainViewInput, output: DogsMainViewOutput) {
-        self.input = input
-        self.output = output
+    init(presenter: DogsMainPresenterProtocol) {
+        self.presenter = presenter
         
         super.init(
             nibName: String(describing: DogsMainViewController.self),
@@ -32,7 +35,8 @@ final class DogsMainViewController: UIViewController {
         super.viewDidLoad()
 
         setupNavigationBar()
-        input.didLoad()
+        bind()
+        viewModelInput.viewLoadedPublisher.send()
     }
 }
 
@@ -57,6 +61,34 @@ private extension DogsMainViewController {
             navigationController?.navigationBar.titleTextAttributes = attributes
         }
         
-        title = input.navTitle
+        title = presenter.navTitle
+    }
+    
+    func bind() {
+        let output = presenter.bind(input: viewModelInput)
+
+        output
+            .viewDataPublisher
+            .sink { [weak self] _ in
+                self?.dismissLoadingView()
+                output.displayErrorAlertPublisher.send()
+            } receiveValue: { [weak self] in
+                self?.dismissLoadingView()
+                self?.fillWithData(viewData: $0)
+            }
+            .store(in: &subscriptions)
+
+        output
+            .displayLoadingPublisher
+            .sink { [weak self] in
+                self?.showLoadingView()
+            }
+            .store(in: &subscriptions)
+    }
+    
+    private func fillWithData(viewData: [DogModel]) {
+        self.dogsModel = viewData
+
+        // crear celda y actualizar collectionview
     }
 }

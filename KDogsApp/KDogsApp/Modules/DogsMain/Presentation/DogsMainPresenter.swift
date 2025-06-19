@@ -7,8 +7,12 @@
 
 import Combine
 
-protocol DogsMainPresenterProtocol: DogsMainViewInput, DogsMainViewOutput {
-    func retryFetchRequest()
+protocol DogsMainPresenterProtocol {
+    var navTitle: String { get }
+    var output: DogsMainViewOutput { get }
+    var dogsList: [DogModel] { get }
+
+    func bind(input: DogsMainViewInput) -> DogsMainViewOutput
 }
 
 final class DogsMainPresenter {
@@ -25,6 +29,7 @@ final class DogsMainPresenter {
     // MARK: - Public properties
     
     var dogsList: [DogModel] = []
+    var output = DogsMainViewOutput()
     
     // MARK: - Functions
     
@@ -48,21 +53,28 @@ extension DogsMainPresenter: DogsMainPresenterProtocol {
     }
     
     // MARK: - Input functions
-    
-    func didLoad() {
-        loadViewData()
-    }
-    
-    func retryFetchRequest() {
-        
+    func bind(input: DogsMainViewInput) -> DogsMainViewOutput {
+        input
+            .viewLoadedPublisher
+            .sink { [weak self] in
+                self?.output.displayLoadingPublisher.send()
+                self?.loadViewData()
+        }
+        .store(in: &self.subscriptions)
+
+        input
+            .retryPublisher
+            .sink { [weak self] in
+                self?.output.displayLoadingPublisher.send()
+                self?.loadViewData()
+        }
+        .store(in: &self.subscriptions)
+
+        return output
     }
 }
 
 private extension DogsMainPresenter {
-    func bind() {
-        
-    }
-    
     func loadViewData() {
         interactor
             .fetchDogsList()
@@ -73,19 +85,18 @@ private extension DogsMainPresenter {
                     let saveLastDogModel = self.interactor.fetchDogsFromCoreData()
                     
                     if !saveLastDogModel.isEmpty {
-                        // recargar el collection view
+                        self.output.viewDataPublisher.send(saveLastDogModel)
                     } else {
                         self.wireframe.showAlert(
                             title: "Ha ocurrido un error",
-                            message: "No se pudo cargar la información. Vuelva a intentarlo.",
-                            presenter: self
+                            message: "No se pudo cargar la información. Vuelva a intentarlo."
                         )
                     }
                 }
             } receiveValue: { [weak self] model in
                 self?.interactor.dogsList = model
                 self?.interactor.saveDogsToCoreData(model)
-                // cargar la info en el collectionview
+                self?.output.viewDataPublisher.send(model)
             }
             .store(in: &subscriptions)
     }

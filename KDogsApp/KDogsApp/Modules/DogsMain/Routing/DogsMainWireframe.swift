@@ -9,11 +9,7 @@ import UIKit
 
 protocol DogsMainWireframeProtocol {
     func showViewController(presenter: DogsMainPresenterProtocol)
-    func showAlert(
-        title: String,
-        message: String,
-        presenter: DogsMainPresenterProtocol
-    )
+    func showAlert(title: String, message: String, titleButtonOne: String, titleButtonTwo: String)
 }
 
 final class DogsMainWireframe {
@@ -34,17 +30,13 @@ final class DogsMainWireframe {
 
 extension DogsMainWireframe: DogsMainWireframeProtocol {
     func showViewController(presenter: DogsMainPresenterProtocol) {
-        let viewController = DogsMainViewController(
-            input: presenter, output: presenter
-        )
+        let viewController = DogsMainViewController(presenter: presenter)
         
         navigationController?.pushViewController(viewController, animated: true)
     }
     
     func showAlert(
-        title: String,
-        message: String,
-        presenter: DogsMainPresenterProtocol
+        title: String, message: String, titleButtonOne: String, titleButtonTwo: String
     ) {
         let alert = UIAlertController(
             title: title,
@@ -52,12 +44,26 @@ extension DogsMainWireframe: DogsMainWireframeProtocol {
             preferredStyle: UIAlertController.Style.alert
         )
         
-        alert.addAction(UIAlertAction(title: "Aceptar", style: UIAlertAction.Style.default, handler: { action in
-            presenter.retryFetchRequest()
+        alert.addAction(UIAlertAction(title: titleButtonOne, style: UIAlertAction.Style.default, handler: { action in
+            
+            if let dogsVC = self.navigationController?.viewControllers.last as? DogsMainViewController {
+                dogsVC.viewModelInput.retryPublisher.send()
+            }
         }))
         
-        alert.addAction(UIAlertAction(title: "Cancelar", style: UIAlertAction.Style.cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: titleButtonTwo, style: UIAlertAction.Style.cancel, handler: nil))
         
         navigationController?.present(alert, animated: true, completion: nil)
+    }
+}
+
+extension DogsMainWireframeProtocol {
+    func showAlert(
+        title: String,
+        message: String,
+        titleButtonOne: String = "Aceptar",
+        titleButtonTwo: String = "Cancelar"
+    ) {
+        showAlert(title: title, message: message, titleButtonOne: titleButtonOne, titleButtonTwo: titleButtonTwo)
     }
 }
