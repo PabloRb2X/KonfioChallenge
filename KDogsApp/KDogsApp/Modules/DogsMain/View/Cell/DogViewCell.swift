@@ -43,6 +43,15 @@ final class DogViewCell: UICollectionViewCell {
         }
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        dogImageView.image = nil
+        dogNameLabel.text = ""
+        dogDescriptionLabel.text = ""
+        dogAgeLabel.text = ""
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         
