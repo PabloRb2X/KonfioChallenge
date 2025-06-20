@@ -9,7 +9,7 @@ import UIKit
 
 protocol DogsMainWireframeProtocol {
     func showViewController(presenter: DogsMainPresenterProtocol)
-    func showAlert(title: String, titleButton: String)
+    func showAlert(title: String, titleButtonOne: String, viewAction: DogAction, message: String?, titleButtonTwo: String?)
 }
 
 final class DogsMainWireframe {
@@ -35,25 +35,45 @@ extension DogsMainWireframe: DogsMainWireframeProtocol {
         navigationController?.pushViewController(viewController, animated: true)
     }
     
-    func showAlert(title: String, titleButton: String) {
+    func showAlert(title: String, titleButtonOne: String, viewAction: DogAction, message: String?, titleButtonTwo: String?) {
         let alert = UIAlertController(
-            title: title, message: nil,
+            title: title, message: message,
             preferredStyle: UIAlertController.Style.alert
         )
         
-        alert.addAction(UIAlertAction(title: titleButton, style: UIAlertAction.Style.default, handler: { action in
+        alert.addAction(UIAlertAction(title: titleButtonOne, style: UIAlertAction.Style.default,
+                                      handler: { [weak self] action in
             
-            if let dogsVC = self.navigationController?.viewControllers.last as? DogsMainViewController {
-                dogsVC.viewModelInput.retryPublisher.send()
+            if let dogsVC = self?.getDogsMainVC() {
+                switch viewAction {
+                case .reload:
+                    dogsVC.viewModelInput.retryPublisher.send()
+                case .requestDB:
+                    dogsVC.viewModelInput.queryDBPublisher.send()
+                }
             }
         }))
+        
+        if titleButtonTwo != nil {
+            alert.addAction(UIAlertAction(title: titleButtonTwo, style: UIAlertAction.Style.cancel,
+                                          handler: { [weak self] action in
+                
+                if let dogsVC = self?.getDogsMainVC(){
+                    switch viewAction {
+                    case .requestDB:
+                        dogsVC.viewModelInput.retryPublisher.send()
+                    default: break
+                    }
+                }
+            }))
+        }
         
         navigationController?.present(alert, animated: true, completion: nil)
     }
 }
 
-extension DogsMainWireframeProtocol {
-    func showAlert(title: String, titleButton: String = "Reintentar") {
-        showAlert(title: title, titleButton: titleButton)
+private extension DogsMainWireframe {
+    func getDogsMainVC() -> DogsMainViewController? {
+        navigationController?.viewControllers.last as? DogsMainViewController
     }
 }

@@ -26,6 +26,7 @@ final class DogsMainViewController: UIViewController {
     private let presenter: DogsMainPresenterProtocol
     private var dogsModel: [DogModel] = []
     private var subscriptions = Set<AnyCancellable>()
+    private let refreshControl = UIRefreshControl()
     
     let viewModelInput: DogsMainViewInput = DogsMainViewInput()
 
@@ -45,8 +46,9 @@ final class DogsMainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        setupNavigationBar()
         bind()
+        setupNavigationBar()
+        setupRefreshControl()
         viewModelInput.viewLoadedPublisher.send()
     }
 }
@@ -60,20 +62,24 @@ private extension DogsMainViewController {
         backButton.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
         backButton.tintColor = UIColor.customBlack
         backButton.sizeToFit()
-
+        
         let backBarItem = UIBarButtonItem(customView: backButton)
         navigationItem.leftBarButtonItem = backBarItem
         
         if let arialFont = UIFont(name: "Arial-BoldMT", size: 20) {
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: arialFont,
-//                .foregroundColor: UIColor.customBlack
             ]
             
             navigationController?.navigationBar.titleTextAttributes = attributes
         }
         
         title = presenter.navTitle
+    }
+    
+    func setupRefreshControl() {
+        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        dogsCollectionView.refreshControl = refreshControl
     }
     
     func bind() {
@@ -83,7 +89,6 @@ private extension DogsMainViewController {
             .viewDataPublisher
             .sink { [weak self] _ in
                 self?.dismissLoadingView()
-                output.displayErrorAlertPublisher.send()
             } receiveValue: { [weak self] in
                 self?.dismissLoadingView()
                 self?.fillWithData(viewData: $0)
@@ -96,12 +101,25 @@ private extension DogsMainViewController {
                 self?.showLoadingView()
             }
             .store(in: &subscriptions)
+        
+        output
+            .endRefreshingPublisher
+            .sink { [weak self] in
+                DispatchQueue.main.async { [weak self] in
+                    self?.dogsCollectionView.refreshControl?.endRefreshing()
+                }
+            }
+            .store(in: &subscriptions)
     }
     
-    private func fillWithData(viewData: [DogModel]) {
+    func fillWithData(viewData: [DogModel]) {
         self.dogsModel = viewData
 
         dogsCollectionView.reloadData()
+    }
+    
+    @objc func refreshData() {
+        presenter.showViewOptionsDataAlert()
     }
 }
 

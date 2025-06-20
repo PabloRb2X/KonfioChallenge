@@ -14,17 +14,22 @@ protocol DogsMainInteractorProtocol {
     var dogsList: [DogModel] { get set }
     
     func fetchDogsList() -> AnyPublisher<[DogModel], AFError>
-    func saveDogsToCoreData(_ dogs: [DogModel])
+    func saveDogsToCoreData()
     func fetchDogsFromCoreData() -> [DogModel]
 }
 
 final class DogsMainInteractor {
     private let networkManager: AppNetworkManagerProtocol
+    private var coreDataContext: NSManagedObjectContext?
     private var cancellables = Set<AnyCancellable>()
     
     var dogsList: [DogModel] = []
     
-    init(networkManager: AppNetworkManagerProtocol = AppNetworkManager()) {
+    init(
+        coreDataContext: NSManagedObjectContext? = nil,
+        networkManager: AppNetworkManagerProtocol = AppNetworkManager()
+    ) {
+        self.coreDataContext = coreDataContext
         self.networkManager = networkManager
     }
 }
@@ -34,13 +39,12 @@ extension DogsMainInteractor: DogsMainInteractorProtocol {
         networkManager.fetch(APIRouter.fetchDogsList, decoder: .init())
     }
     
-    func saveDogsToCoreData(_ dogs: [DogModel]) {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
-        let context = appDelegate.persistentContainer.viewContext
+    func saveDogsToCoreData() {
+        guard let context = coreDataContext else { return }
         
-        emptyDogsData(context: context)
+        emptyDogsData()
         
-        for dog in dogs {
+        for dog in dogsList {
             let entity = DogEntity(context: context)
             
             entity.dogName = dog.dogName
@@ -57,9 +61,8 @@ extension DogsMainInteractor: DogsMainInteractorProtocol {
     }
     
     func fetchDogsFromCoreData() -> [DogModel] {
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return [] }
+        guard let context = coreDataContext else { return [] }
         
-        let context = appDelegate.persistentContainer.viewContext
         let request: NSFetchRequest<DogEntity> = DogEntity.fetchRequest()
 
         do {
@@ -80,12 +83,14 @@ extension DogsMainInteractor: DogsMainInteractorProtocol {
 }
 
 private extension DogsMainInteractor {
-    func emptyDogsData(context: NSManagedObjectContext) {
+    func emptyDogsData() {
+        guard let context = coreDataContext else { return }
+
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = DogEntity.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         
         do {
-            try context.execute(deleteRequest)
+            let results = try context.fetch(fetchRequest) as? [NSManagedObject]
+            results?.forEach { context.delete($0) }
         } catch {
             // Not implemented
         }

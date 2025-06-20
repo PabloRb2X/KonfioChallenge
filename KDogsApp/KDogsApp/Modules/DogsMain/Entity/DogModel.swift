@@ -7,6 +7,11 @@
 
 import Foundation
 
+enum DogAction {
+    case reload
+    case requestDB
+}
+
 struct DogModel: Codable {
     let dogName: String
     let description: String
